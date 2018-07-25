@@ -1,5 +1,6 @@
 package com.paascloud.distributedlock.zk;
 
+
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 
@@ -13,47 +14,45 @@ import java.util.concurrent.TimeUnit;
  */
 public class ZkLock {
 
-    private static CuratorFramework client;
+    private static CuratorFramework curatorFramework;
 
-    public static CuratorFramework getClient() {
-        return client;
+    private static void setClient(CuratorFramework cf) {
+        ZkLock.curatorFramework = cf;
     }
 
-    public static void setClient(CuratorFramework client) {
-        ZkLock.client = client;
-    }
-
-    public ZkLock(CuratorFramework client) {
-        setClient(client);
-        getClient().start();
+    public ZkLock(CuratorFramework curatorFramework) {
+        setClient(curatorFramework);
     }
 
     /**
      * 类级的内部类，也就是静态的成员式内部类，该内部类的实例与外部类的实例
      * 没有绑定关系，而且只有被调用到才会装载，从而实现了延迟加载
-     * 针对一件商品实现，多件商品同时秒杀建议实现一个map
      */
     private static class SingletonHolder {
+        static String path = "";
         /**
          * 静态初始化器，由JVM来保证线程安全
          */
-        private static InterProcessMutex mutex = new InterProcessMutex(client, "/curator/lock");
+        private static InterProcessMutex mutex = new InterProcessMutex(curatorFramework, "/curator-lock" + path);
     }
 
-    public static InterProcessMutex getMutex() {
+    private static InterProcessMutex getMutex(String lockPath) {
+        SingletonHolder.path = lockPath;
         return SingletonHolder.mutex;
     }
+
 
     /**
      * 获得了锁
      *
-     * @param time 锁定时长
-     * @param unit 时间单位
+     * @param lockPath 锁路径
+     * @param time     锁定时长
+     * @param unit     时间单位
      * @return boolean
      */
-    public boolean lock(long time, TimeUnit unit) {
+    public boolean lock(String lockPath, long time, TimeUnit unit) {
         try {
-            return getMutex().acquire(time, unit);
+            return getMutex(lockPath).acquire(time, unit);
         } catch (Exception e) {
             e.printStackTrace();
             return false;
@@ -62,10 +61,12 @@ public class ZkLock {
 
     /**
      * 释放锁
+     *
+     * @param lockPath 锁路径
      */
-    public void unlock() {
+    public void unlock(String lockPath) {
         try {
-            getMutex().release();
+            getMutex(lockPath).release();
         } catch (Exception e) {
             e.printStackTrace();
         }
