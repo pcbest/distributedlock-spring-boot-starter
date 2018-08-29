@@ -3,12 +3,10 @@ package com.paascloud.distributedlock.configuration;
 import com.paascloud.distributedlock.config.DistributedProperties;
 import com.paascloud.distributedlock.config.ZookeeperProperties;
 import com.paascloud.distributedlock.service.impl.ZkDistributedLocker;
-import com.paascloud.distributedlock.service.DistributedLocker;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.ExponentialBackoffRetry;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.EnableConfigurationProperties;
@@ -23,7 +21,6 @@ import javax.annotation.Resource;
  * @author gsfeng
  */
 @Configuration
-@ConditionalOnClass(ZkDistributedLocker.class)
 @EnableConfigurationProperties(DistributedProperties.class)
 @ConditionalOnProperty("distributedLock.zk.zkAddressList")
 public class ZkLockConfigure {
@@ -37,7 +34,7 @@ public class ZkLockConfigure {
      */
     @Bean("zkDistributedLocker")
     @ConditionalOnMissingBean
-    public DistributedLocker zkLock() {
+    public ZkDistributedLocker zkLock() {
 
         ZookeeperProperties zookeeperProperties = distributedProperties.getZk();
         // 重试策略

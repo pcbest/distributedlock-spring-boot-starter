@@ -31,7 +31,7 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
     }
 
     private InterProcessMutex getLock(LockType lockType, String lockKey) {
-        lockKey += PREFIX_KEY;
+        lockKey = PREFIX_KEY + lockKey;
         switch (lockType) {
             case LOCK:
                 return new InterProcessMutex(curatorFramework, lockKey);
@@ -63,6 +63,10 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
 
     @Override
     public InterProcessMutex tryLock(LockType lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
+        if (curatorFramework == null) {
+            throw new DistributedLockException("ZkLock isn't initialized");
+        }
+
         if (StringUtils.isEmpty(lockKey)) {
             throw new DistributedLockException("lockKey key is null or empty");
         }
@@ -79,9 +83,10 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
             throw new DistributedLockException("Async lock of ZkLock isn't support, lockKey={}" + lockKey);
         }
 
-        if (curatorFramework == null) {
-            throw new DistributedLockException("ZkLock isn't initialized");
+        if (unit == null) {
+            unit = TimeUnit.SECONDS;
         }
+
         boolean acquired;
         InterProcessMutex lock = getLock(lockType, lockKey);
 

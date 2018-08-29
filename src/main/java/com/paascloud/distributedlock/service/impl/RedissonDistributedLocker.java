@@ -39,7 +39,7 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
         lockKey = PREFIX_KEY + lockKey;
         switch (lockType) {
             case LOCK:
-                redissonClient.getLock(lockKey);
+                return redissonClient.getLock(lockKey);
             case READ_LOCK:
                 return redissonClient.getReadWriteLock(lockKey).readLock();
             case WRITE_LOCK:
@@ -68,21 +68,26 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
 
     @Override
     public RLock tryLock(LockType lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
+        if (redissonClient == null) {
+            throw new DistributedLockException("Redisson isn't initialized");
+        }
+
         if (StringUtils.isEmpty(lockKey)) {
             throw new DistributedLockException("lockKey key is null or empty");
         }
 
         if (waitTime == null) {
-            throw new DistributedLockException("waitTime key is null");
+           waitTime = 0;
         }
 
         if (leaseTime == null) {
             throw new DistributedLockException("leaseTime key is null");
         }
 
-        if (redissonClient == null) {
-            throw new DistributedLockException("Redisson isn't initialized");
+        if (unit == null) {
+            unit = TimeUnit.SECONDS;
         }
+
         boolean acquired;
         RLock lock = getLock(lockType, lockKey);
 
@@ -91,11 +96,13 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
             return null;
         }
 
+        log.info("获取到锁 lock={}", lock);
+
         try {
             if (async) {
-                acquired = lock.tryLockAsync(waitTime, leaseTime, TimeUnit.MILLISECONDS).get();
+                acquired = lock.tryLockAsync(waitTime, leaseTime, unit).get();
             } else {
-                acquired = lock.tryLock(waitTime, leaseTime, TimeUnit.MILLISECONDS);
+                acquired = lock.tryLock(waitTime, leaseTime, unit);
             }
         } catch (InterruptedException | ExecutionException e) {
             log.error("加锁出现异常, e={}", e.getMessage(), e);

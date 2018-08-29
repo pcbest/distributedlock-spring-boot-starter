@@ -144,7 +144,7 @@ public class RedissonConfiguration {
     @Bean("redissonDistributedLocker")
     @ConditionalOnMissingBean
     @ConditionalOnClass(RedissonClient.class)
-    DistributedLocker distributedLocker(RedissonClient redissonClient) {
+    RedissonDistributedLocker distributedLocker(RedissonClient redissonClient) {
         return new RedissonDistributedLocker(redissonClient);
     }
 
