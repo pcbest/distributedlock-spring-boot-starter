@@ -5,7 +5,7 @@
 
     <groupId>com.liuzm.paascloud</groupId>
     <artifactId>distributedlock-spring-boot-starter</artifactId>
-    <version>1.0.1-SNAPSHOT</version>
+    <version>1.0</version>
     <packaging>jar</packaging>
 
     <name>distributedlock-spring-boot-starter</name>
@@ -51,6 +51,11 @@
             <groupId>org.projectlombok</groupId>
             <artifactId>lombok</artifactId>
             <version>1.16.18</version>
+        </dependency>
+        <dependency>
+            <groupId>org.redisson</groupId>
+            <artifactId>redisson</artifactId>
+            <version>3.7.5</version>
         </dependency>
     </dependencies>
 

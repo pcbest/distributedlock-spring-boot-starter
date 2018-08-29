@@ -1,15 +1,17 @@
-package com.paascloud.distributedlock;
+package com.paascloud.distributedlock.config;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 /**
+ * The type Zookeeper properties.
+ *
  * @author gsfeng
  */
 @Setter
 @Getter
-@ConfigurationProperties(prefix = "distributedlock.zk")
 public class ZookeeperProperties {
     /**
      * 连接Zookeeper服务器的列表
@@ -23,6 +25,11 @@ public class ZookeeperProperties {
      * Zookeeper的命名空间
      */
     private String namespace;
+
+    /**
+     * 密码
+     */
+    private String password;
 
     /**
      * 等待重试的间隔时间的初始值

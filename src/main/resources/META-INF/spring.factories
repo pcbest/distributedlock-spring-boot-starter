@@ -1,1 +1,3 @@
-org.springframework.boot.autoconfigure.EnableAutoConfiguration=com.paascloud.distributedlock.autoconfigure.ZkLockAutoConfigure
+# org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+com.paascloud.distributedlock.configuration.ZkLockAutoConfigure,\
+com.paascloud.distributedlock.configuration.RedissonAutoConfiguration
