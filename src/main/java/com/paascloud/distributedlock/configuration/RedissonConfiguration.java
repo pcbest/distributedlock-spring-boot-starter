@@ -1,7 +1,7 @@
 package com.paascloud.distributedlock.configuration;
 
+import com.paascloud.distributedlock.annotation.LockAspect;
 import com.paascloud.distributedlock.config.*;
-import com.paascloud.distributedlock.service.DistributedLocker;
 import com.paascloud.distributedlock.service.impl.RedissonDistributedLocker;
 import org.redisson.Redisson;
 import org.redisson.api.RedissonClient;
@@ -146,6 +146,12 @@ public class RedissonConfiguration {
     @ConditionalOnClass(RedissonClient.class)
     RedissonDistributedLocker distributedLocker(RedissonClient redissonClient) {
         return new RedissonDistributedLocker(redissonClient);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
+    LockAspect lockAspect() {
+        return new LockAspect();
     }
 
     private Config getConfig(DistributedProperties distributedProperties) {

@@ -1,15 +1,15 @@
 package com.paascloud.distributedlock.annotation;
 
 /**
- * The enum Lock type.
+ * The enum LockAnnotation type enum.
  *
- * @author paascloud.net@gmail.com
+ * @author paascloud.net @gmail.com
  */
-public enum LockType {
+public enum LockTypeEnum {
     /**
      * 普通锁
      */
-    LOCK("Lock"),
+    LOCK("LockAnnotation"),
 
     /**
      * 读锁
@@ -24,7 +24,7 @@ public enum LockType {
 
     private String value;
 
-    LockType(String value) {
+    LockTypeEnum(String value) {
         this.value = value;
     }
 

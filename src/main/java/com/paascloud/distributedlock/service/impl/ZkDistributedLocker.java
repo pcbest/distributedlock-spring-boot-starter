@@ -1,12 +1,13 @@
 package com.paascloud.distributedlock.service.impl;
 
-import com.paascloud.distributedlock.annotation.LockType;
+import com.paascloud.distributedlock.annotation.LockTypeEnum;
 import com.paascloud.distributedlock.exception.DistributedLockException;
 import com.paascloud.distributedlock.service.DistributedLocker;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.locks.InterProcessMutex;
 import org.apache.curator.framework.recipes.locks.InterProcessReadWriteLock;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.springframework.util.StringUtils;
 
 import java.util.concurrent.TimeUnit;
@@ -30,7 +31,7 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
         setClient(curatorFramework);
     }
 
-    private InterProcessMutex getLock(LockType lockType, String lockKey) {
+    private InterProcessMutex getLock(LockTypeEnum lockType, String lockKey) {
         lockKey = PREFIX_KEY + lockKey;
         switch (lockType) {
             case LOCK:
@@ -58,11 +59,16 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
 
     @Override
     public InterProcessMutex tryLock(String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
-        return this.tryLock(LockType.LOCK, lockKey, TimeUnit.SECONDS, waitTime, leaseTime, false);
+        return this.tryLock(LockTypeEnum.LOCK, lockKey, TimeUnit.SECONDS, waitTime, leaseTime, false);
     }
 
     @Override
-    public InterProcessMutex tryLock(LockType lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
+    public InterProcessMutex tryLock(LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) {
+        return this.tryLock(LockTypeEnum.LOCK, lockKey, TimeUnit.SECONDS, waitTime, leaseTime, false);
+    }
+
+    @Override
+    public InterProcessMutex tryLock(LockTypeEnum lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
         if (curatorFramework == null) {
             throw new DistributedLockException("ZkLock isn't initialized");
         }
@@ -106,7 +112,7 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
     }
 
     @Override
-    public void unlock(LockType lockType, String lockKey) {
+    public void unlock(LockTypeEnum lockType, String lockKey) {
         if (StringUtils.isEmpty(lockKey)) {
             throw new DistributedLockException("lockKey key is null or empty");
         }
@@ -123,5 +129,26 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
                 log.error("zkLock unlock is error. ex={}", e.getMessage(), e);
             }
         }
+    }
+
+    @Override
+    public Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) throws Throwable {
+        InterProcessMutex lock = null;
+        Object result;
+        try {
+            lock = this.tryLock(lockType, lockKey, leaseTime, waitTime, async);
+            if (lock == null) {
+                log.error("加锁失败 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);
+                throw new DistributedLockException("获取zk锁失败" + "[lockKey=" + lockType.getValue() + "lockKey=" + lockKey + "]" );
+            }
+            log.error("加锁成功 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);
+            result = joinPoint.proceed();
+        } finally {
+            if (lock != null) {
+                this.unlock(lock);
+            }
+        }
+
+        return result;
     }
 }

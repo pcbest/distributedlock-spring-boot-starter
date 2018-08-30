@@ -1,9 +1,10 @@
 package com.paascloud.distributedlock.service.impl;
 
-import com.paascloud.distributedlock.annotation.LockType;
+import com.paascloud.distributedlock.annotation.LockTypeEnum;
 import com.paascloud.distributedlock.exception.DistributedLockException;
 import com.paascloud.distributedlock.service.DistributedLocker;
 import lombok.extern.slf4j.Slf4j;
+import org.aspectj.lang.ProceedingJoinPoint;
 import org.redisson.api.RLock;
 import org.redisson.api.RedissonClient;
 import org.springframework.util.StringUtils;
@@ -35,7 +36,7 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
         this.setClient(redissonClient);
     }
 
-    private RLock getLock(LockType lockType, String lockKey) {
+    private RLock getLock(LockTypeEnum lockType, String lockKey) {
         lockKey = PREFIX_KEY + lockKey;
         switch (lockType) {
             case LOCK:
@@ -63,11 +64,16 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
 
     @Override
     public RLock tryLock(String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
-        return this.tryLock(LockType.LOCK, lockKey, TimeUnit.SECONDS, waitTime, leaseTime, false);
+        return this.tryLock(LockTypeEnum.LOCK, lockKey, TimeUnit.SECONDS, waitTime, leaseTime, false);
     }
 
     @Override
-    public RLock tryLock(LockType lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
+    public RLock tryLock(LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) {
+        return this.tryLock(LockTypeEnum.LOCK, lockKey, TimeUnit.SECONDS, waitTime, leaseTime, false);
+    }
+
+    @Override
+    public RLock tryLock(LockTypeEnum lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) {
         if (redissonClient == null) {
             throw new DistributedLockException("Redisson isn't initialized");
         }
@@ -113,17 +119,45 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
     }
 
     @Override
-    public void unlock(LockType lockType, String lockKey) {
+    public void unlock(LockTypeEnum lockType, String lockKey) {
         if (StringUtils.isEmpty(lockKey)) {
             throw new DistributedLockException("lockKey key is null or empty");
         }
 
         RLock lock = getLock(lockType, lockKey);
-        lock.unlock();
+        this.unlock(lock);
     }
     
     @Override
     public void unlock(RLock lock) {
-        lock.unlock();
+        if (lock != null) {
+            try {
+                lock.unlock();
+            } catch (Exception e) {
+                log.error("redisson unlock is error. ex={}", e.getMessage(), e);
+            }
+        }
+
+    }
+
+    @Override
+    public Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) throws Throwable {
+        RLock lock = null;
+        Object result;
+        try {
+            lock = this.tryLock(lockType, lockKey, leaseTime, waitTime, async);
+            if (lock == null) {
+                log.error("加锁失败 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);
+                throw new DistributedLockException("获取redisson锁失败" + "[lockKey=" + lockType.getValue() + "lockKey=" + lockKey + "]" );
+            }
+            log.info("加锁成功 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);
+            result = joinPoint.proceed();
+        } finally {
+            if (lock != null) {
+                this.unlock(lock);
+            }
+        }
+
+        return result;
     }
 }

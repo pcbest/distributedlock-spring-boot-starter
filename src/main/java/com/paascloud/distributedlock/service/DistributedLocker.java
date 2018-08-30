@@ -2,7 +2,8 @@ package com.paascloud.distributedlock.service;
 
 import java.util.concurrent.TimeUnit;
 
-import com.paascloud.distributedlock.annotation.LockType;
+import com.paascloud.distributedlock.annotation.LockTypeEnum;
+import org.aspectj.lang.ProceedingJoinPoint;
 
 /**
  * The interface Distributed locker.
@@ -45,6 +46,18 @@ public interface DistributedLocker<T> {
      */
     T tryLock(String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async);
 
+    /**
+     * 尝试加锁，最多等待${waitTime}秒，上锁以后${leaseTime}秒自动解锁.
+     *
+     * @param lockType  锁类型
+     * @param lockKey   key
+     * @param waitTime  等待时间
+     * @param leaseTime 加锁时间
+     * @param async     是否异步
+     * @return the boolean
+     */
+    T tryLock(LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async);
+
 
     /**
      * 尝试加锁，最多等待${waitTime}秒，上锁以后${leaseTime}秒自动解锁.
@@ -57,7 +70,7 @@ public interface DistributedLocker<T> {
      * @param async     是否异步
      * @return the boolean
      */
-    T tryLock(LockType lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async);
+    T tryLock(LockTypeEnum lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async);
 
     /**
      * 解锁.
@@ -65,7 +78,7 @@ public interface DistributedLocker<T> {
      * @param lockType the lock type
      * @param lockKey  key
      */
-    void unlock(LockType lockType, String lockKey);
+    void unlock(LockTypeEnum lockType, String lockKey);
 
     /**
      * 解锁.
@@ -73,4 +86,19 @@ public interface DistributedLocker<T> {
      * @param lock 锁
      */
     void unlock(T lock);
+
+
+    /**
+     * Invoke object.
+     *
+     * @param joinPoint 切点
+     * @param lockType  锁类型
+     * @param lockKey   key
+     * @param waitTime  锁等待时间
+     * @param leaseTime 加锁时间
+     * @param async     是否异步
+     * @return the object
+     * @throws Throwable the throwable
+     */
+    Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) throws Throwable;
 }
