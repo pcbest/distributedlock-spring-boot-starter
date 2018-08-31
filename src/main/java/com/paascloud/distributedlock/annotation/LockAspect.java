@@ -11,6 +11,7 @@ import org.springframework.util.StringUtils;
 
 import java.lang.annotation.Annotation;
 import java.lang.reflect.Method;
+import java.util.concurrent.TimeUnit;
 
 /**
  * The type LockAnnotation aspect.
@@ -55,6 +56,7 @@ public class LockAspect {
 
         DistributedLockTypeEnum name = lockAnnotation.name();
         LockTypeEnum lockType = lockAnnotation.lockType();
+        TimeUnit unit = lockAnnotation.unit();
         String lockKey = lockAnnotation.lockKey();
         int leaseTime = lockAnnotation.leaseTime();
         int waitTime = lockAnnotation.waitTime();
@@ -76,7 +78,7 @@ public class LockAspect {
 
         DistributedLocker locker = applicationContext.getBean(beanName, DistributedLocker.class);
 
-        return locker.invoke(joinPoint, lockType, lockKey, leaseTime, waitTime, async);
+        return locker.invoke(joinPoint, lockType, lockKey, unit, leaseTime, waitTime, async);
     }
 
 

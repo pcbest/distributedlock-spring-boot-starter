@@ -141,13 +141,13 @@ public class RedissonDistributedLocker implements DistributedLocker<RLock> {
     }
 
     @Override
-    public Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) throws Throwable {
+    public Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) throws Throwable {
         RLock lock = null;
         Object result;
         try {
             lock = this.tryLock(lockType, lockKey, leaseTime, waitTime, async);
             if (lock == null) {
-                log.error("加锁失败 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);
+                log.error("加锁失败 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, unit, leaseTime, waitTime, async);
                 throw new DistributedLockException("获取redisson锁失败" + "[lockKey=" + lockType.getValue() + "lockKey=" + lockKey + "]" );
             }
             log.info("加锁成功 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);

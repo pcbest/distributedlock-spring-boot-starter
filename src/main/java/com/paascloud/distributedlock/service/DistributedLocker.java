@@ -94,11 +94,12 @@ public interface DistributedLocker<T> {
      * @param joinPoint 切点
      * @param lockType  锁类型
      * @param lockKey   key
+     * @param unit      超时单位
      * @param waitTime  锁等待时间
      * @param leaseTime 加锁时间
      * @param async     是否异步
      * @return the object
      * @throws Throwable the throwable
      */
-    Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) throws Throwable;
+    Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) throws Throwable;
 }

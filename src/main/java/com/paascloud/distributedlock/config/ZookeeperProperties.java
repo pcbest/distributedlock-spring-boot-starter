@@ -19,17 +19,12 @@ public class ZookeeperProperties {
      * 多个地址用逗号分隔
      * 如: host1:2181,host2:2181
      */
-    private String zkAddressList;
+    private String zkAddressList = "127.0.0.1:2181";
 
     /**
      * Zookeeper的命名空间
      */
     private String namespace;
-
-    /**
-     * 密码
-     */
-    private String password;
 
     /**
      * 等待重试的间隔时间的初始值

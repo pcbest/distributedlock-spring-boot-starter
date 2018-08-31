@@ -132,11 +132,11 @@ public class ZkDistributedLocker implements DistributedLocker<InterProcessMutex>
     }
 
     @Override
-    public Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, Integer waitTime, Integer leaseTime, boolean async) throws Throwable {
+    public Object invoke(ProceedingJoinPoint joinPoint, LockTypeEnum lockType, String lockKey, TimeUnit unit, Integer waitTime, Integer leaseTime, boolean async) throws Throwable {
         InterProcessMutex lock = null;
         Object result;
         try {
-            lock = this.tryLock(lockType, lockKey, leaseTime, waitTime, async);
+            lock = this.tryLock(lockType, lockKey, unit, leaseTime, waitTime, async);
             if (lock == null) {
                 log.error("加锁失败 for [key={}, leaseTime={}, waitTime={}, async={}]", lockType, lockKey, leaseTime, waitTime, async);
                 throw new DistributedLockException("获取zk锁失败" + "[lockKey=" + lockType.getValue() + "lockKey=" + lockKey + "]" );

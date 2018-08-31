@@ -17,7 +17,7 @@ public class RedissonProperties {
     /**
      * - cluster 集群, - replicated 云托管模式, - sentinel 哨兵, - single 单点
      */
-    private String redisType;
+    private String redisType = "single";
 
     /**
      * 监控锁的看门狗超时
